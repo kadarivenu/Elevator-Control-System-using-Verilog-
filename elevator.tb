@@ -1,0 +1,80 @@
+module elevator_tb;
+    // Inputs
+    reg clk;
+    reg reset;
+    reg [3:0] request;
+    reg [1:0] current_floor;
+    // Outputs
+    wire [1:0] motor;
+    wire door_open;
+    wire [1:0] floor_display;
+    // Instantiate the elevator module
+    elevator uut (
+        .clk(clk),
+        .reset(reset),
+        .request(request),
+        .current_floor(current_floor),
+        .motor(motor),
+        .door_open(door_open),
+        .floor_display(floor_display)
+    );
+    // Clock generation
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk; // 10ns clock period
+    end
+    // Simulate floor sensor updates
+    task simulate_floor_movement(input [1:0] target);
+        begin
+            while (current_floor != target) begin
+                #10;
+                if (current_floor < target)
+                    current_floor = current_floor + 1;
+                else
+                    current_floor = current_floor - 1;
+            end
+        end
+    endtask
+    // Main stimulus
+    initial begin
+        // Initialize
+        reset = 1;
+        request = 4'b0000;
+        current_floor = 2'd0;
+        #20;
+        reset = 0;
+        #10;
+        // Request floor 2
+        request = 4'b0100;
+        #10;
+        // Simulate elevator moving to floor 2
+        simulate_floor_movement(2);
+        // Clear request
+        request = 4'b0000;
+        #50;
+        // Simulate return to ground
+        simulate_floor_movement(0);
+        #50;
+        // Simulate return back to floor 2
+        simulate_floor_movement(2);
+        #50;
+        // Request floor 3
+        request = 4'b1000;
+        #10;
+        simulate_floor_movement(3);
+        request = 4'b0000;
+        #50;
+        // Return to ground
+        simulate_floor_movement(0);
+        #50;
+        // Request to floor 3
+        request=4'b1000;
+        #10
+        simulate_floor_movement(3);
+        request=4'b0000;
+        #50; 
+        simulate_floor_movement(0);
+        #50
+        $finish;
+    end
+endmodule
